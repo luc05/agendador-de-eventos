@@ -23,18 +23,12 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        let user;
-        try {
-          user = await prisma.usuario.findFirst({
-            where: {
-              Email: credentials.email,
-              TipoUsuario: "UsuarioAdministrador",
-            },
-          });
-        } catch (err) {
-          console.error("[AUTH] Erro ao consultar banco:", err);
-          return null;
-        }
+        const user = await prisma.usuario.findFirst({
+          where: {
+            Email: credentials.email,
+            TipoUsuario: "UsuarioAdministrador",
+          },
+        });
 
         if (!user || !user.passwordHash) return null;
 
