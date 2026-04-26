@@ -58,7 +58,7 @@ export default function AdminTelaDeAgenda() {
     ObterHorarios();
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: number) {
     if (!confirm("Remover este horário?")) return;
     await fetch(`/api/agendar/${id}`, { method: "DELETE" });
     ObterHorarios();

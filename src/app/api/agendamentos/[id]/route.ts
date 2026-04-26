@@ -62,7 +62,7 @@ export async function DELETE(
   }
 
   const { id } = await ctx.params;
-  await prisma.agendamentos.delete({ where: { AgendamentoId: id } });
+  await prisma.agendamentos.delete({ where: { AgendamentoId: Number(id) } });
 
   return NextResponse.json({ ok: true });
 }

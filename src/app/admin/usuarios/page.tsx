@@ -82,7 +82,7 @@ export default function AdminTelaUsuarios() {
     ObterUsuarios();
   }
 
-  async function ExcluirUsuario(id: string) {
+  async function ExcluirUsuario(id: number) {
     if (!confirm("Deseja excluir este usuário?")) return;
     await fetch(`/api/usuarios/${id}`, { method: "DELETE" });
     ObterUsuarios();

@@ -47,7 +47,7 @@ export default function DashboardPage() {
     setLoading(false);
   }
 
-  async function handleCancel(id: string) {
+  async function handleCancel(id: number) {
     if (!confirm("Deseja cancelar este agendamento?")) return;
     await fetch(`/api/agendamentos/${id}`, {
       method: "PUT",

@@ -25,7 +25,7 @@ export default function AdminTelaAgendamentos() {
     ObterAgendamentos();
   }, []);
 
-  async function handleCancel(id: string) {
+  async function handleCancel(id: number) {
     if (!confirm("Cancelar este agendamento?")) return;
     await fetch(`/api/agendamentos/${id}`, {
       method: "PUT",
@@ -35,7 +35,7 @@ export default function AdminTelaAgendamentos() {
     ObterAgendamentos();
   }
 
-  async function handleDelete(id: string) {
+  async function handleDelete(id: number) {
     if (!confirm("Excluir permanentemente este agendamento?")) return;
     await fetch(`/api/agendamentos/${id}`, { method: "DELETE" });
     ObterAgendamentos();
