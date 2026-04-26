@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TipoUsuarioEnumBase {
+  UsuarioAdministrador
+  UsuarioCliente
+}
+
+enum AgendamentoStatusEnumBase {
+  Confirmado
+  Cancelado
+}
+
+enum DuracaoServicoEnumBase {
+  MIN_30      // 30 minutos
+  MIN_60      // 1 hora
+  MIN_90      // 1 hora e meia
+  MIN_120     // 2 horas
+  MIN_150     // 2 horas e meia
+  MIN_180     // 3 horas
+}
+
+model Usuario {
+  UsuarioId         String                @id @default(cuid())
+  Nome              String
+  Telefone          String                @unique  // Obrigatorio - identifica o cliente
+  Email             String?               @unique
+  passwordHash      String?               // Só admin precisa de senha, cliente não
+  TipoUsuario       TipoUsuarioEnumBase   @default(UsuarioCliente)
+  Membro            Boolean               @default(false)
+  DataDeCriacao     DateTime              @default(now())
+  DataDeModificacao DateTime              @updatedAt
+  Agendamentos      Agendamentos[]
+}
+
+model Servicos {
+  ServicoId         Int                   @id @default(autoincrement())
+  Nome              String
+  Descricao         String?
+  Duracao           DuracaoServicoEnumBase @default(MIN_30)
+  Custo             Float?                  // Em centavos: 5000 = R$50,00
+  Ativo             Boolean               @default(true)
+  DataDeCriacao     DateTime              @default(now())
+  DataDeModificacao DateTime              @updatedAt
+  Agendamentos      Agendamentos[]
+}
+
+model HorarioDeFuncionamento {
+  HorarioId         String    @id @default(cuid())
+  DiaDaSemana       Int       // 0=Domingo, 1=Segunda ... 6=Sabado
+  HorarioDeInicio   String    // "08:00"
+  HorarioDeEncerramento String // "18:00"
+  Intervalo         Boolean   @default(false) // true = horario de almoco/pausa
+  DataDeCriacao     DateTime  @default(now())
+  DataDeModificacao DateTime  @updatedAt
+
+  @@index([DiaDaSemana])
+}
+
+model Agendamentos {
+  AgendamentoId     String                    @id @default(cuid())
+  UsuarioQueAgendouId String
+  ServicoId         Int
+  DataDoAgendamento DateTime                  @db.Date
+  HorarioDeInicio   String                    // "10:00"
+  HorarioDeEncerramento String                // "10:30"
+  Status            AgendamentoStatusEnumBase  @default(Confirmado)
+  DataDeCriacao     DateTime                  @default(now())
+  DataDeModificacao DateTime                  @updatedAt
+
+  Usuario           Usuario   @relation(fields: [UsuarioQueAgendouId], references: [UsuarioId])
+  Servicos          Servicos  @relation(fields: [ServicoId], references: [ServicoId])
+
+  @@unique([DataDoAgendamento, HorarioDeInicio, HorarioDeEncerramento])
+  @@index([UsuarioQueAgendouId])
+  @@index([DataDoAgendamento])
+}
