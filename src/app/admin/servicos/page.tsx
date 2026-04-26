@@ -2,15 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const DIAS_SEMANA = [
-  { value: 0, label: "Domingo" },
-  { value: 1, label: "Segunda" },
-  { value: 2, label: "Terça" },
-  { value: 3, label: "Quarta" },
-  { value: 4, label: "Quinta" },
-  { value: 5, label: "Sexta" },
-  { value: 6, label: "Sábado" },
-];
+const DIAS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const DURACAO_OPTIONS = [
   { value: "MIN_30", label: "30 minutos" },
@@ -25,6 +17,14 @@ const DURACAO_LABELS: Record<string, string> = Object.fromEntries(
   DURACAO_OPTIONS.map((d) => [d.value, d.label])
 );
 
+interface HorarioDisponivel {
+  HorarioId: number;
+  DiaDaSemana: number;
+  HorarioDeInicio: string;
+  HorarioDeEncerramento: string;
+  Intervalo: boolean;
+}
+
 interface Servico {
   ServicoId: number;
   Nome: string;
@@ -32,11 +32,12 @@ interface Servico {
   Duracao: string;
   Custo: number | null;
   Ativo: boolean;
-  DiasDisponiveis: number[];
+  DiasDisponiveis: { HorarioId: number; Horario: HorarioDisponivel }[];
 }
 
 export default function AdminServicesPage() {
   const [servicos, setServicos] = useState<Servico[]>([]);
+  const [horarios, setHorarios] = useState<HorarioDisponivel[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Servico | null>(null);
   const [form, setForm] = useState({
@@ -44,21 +45,24 @@ export default function AdminServicesPage() {
     Descricao: "",
     Duracao: "MIN_30",
     Custo: 0,
-    DiasDisponiveis: [] as number[],
+    HorarioIds: [] as number[],
   });
 
-  async function ObterSevicos() {
+  async function ObterServicos() {
     const res = await fetch("/api/servicos");
     setServicos(await res.json());
   }
 
   useEffect(() => {
-    ObterSevicos();
+    ObterServicos();
+    fetch("/api/agendar")
+      .then((r) => r.json())
+      .then(setHorarios);
   }, []);
 
   function openCreate() {
     setEditing(null);
-    setForm({ Nome: "", Descricao: "", Duracao: "MIN_30", Custo: 0, DiasDisponiveis: [] });
+    setForm({ Nome: "", Descricao: "", Duracao: "MIN_30", Custo: 0, HorarioIds: [] });
     setShowForm(true);
   }
 
@@ -69,15 +73,17 @@ export default function AdminServicesPage() {
       Descricao: s.Descricao || "",
       Duracao: s.Duracao,
       Custo: s.Custo || 0,
-      DiasDisponiveis: s.DiasDisponiveis || [],
+      HorarioIds: s.DiasDisponiveis.map((d) => d.HorarioId),
     });
     setShowForm(true);
   }
 
-  function toggleDia(dia: number) {
-    const atual = form.DiasDisponiveis;
-    const novo = atual.includes(dia) ? atual.filter((d) => d !== dia) : [...atual, dia];
-    setForm({ ...form, DiasDisponiveis: novo });
+  function toggleHorario(horarioId: number) {
+    const atual = form.HorarioIds;
+    const novo = atual.includes(horarioId)
+      ? atual.filter((id) => id !== horarioId)
+      : [...atual, horarioId];
+    setForm({ ...form, HorarioIds: novo });
   }
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
@@ -98,14 +104,16 @@ export default function AdminServicesPage() {
     }
 
     setShowForm(false);
-    ObterSevicos();
+    ObterServicos();
   }
 
   async function handleDelete(id: number) {
     if (!confirm("Deseja desativar este servico?")) return;
     await fetch(`/api/servicos/${id}`, { method: "DELETE" });
-    ObterSevicos();
+    ObterServicos();
   }
+
+  const horariosDeTrabalho = horarios.filter((h) => !h.Intervalo);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -169,29 +177,46 @@ export default function AdminServicesPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Dias disponíveis</label>
-              <div className="flex flex-wrap gap-3">
-                {DIAS_SEMANA.map((dia) => (
-                  <label key={dia.value} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form.DiasDisponiveis.includes(dia.value)}
-                      onChange={() => toggleDia(dia.value)}
-                      className="rounded"
-                    />
-                    {dia.label}
-                  </label>
-                ))}
-              </div>
-              {form.DiasDisponiveis.length === 0 && (
-                <p className="text-xs text-amber-600 mt-1">Nenhum dia selecionado — serviço aparecerá em todos os dias de funcionamento.</p>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Horários disponíveis
+              </label>
+              {horariosDeTrabalho.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  Nenhum horário de funcionamento cadastrado. Cadastre em Agenda primeiro.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {horariosDeTrabalho.map((h) => (
+                    <label
+                      key={h.HorarioId}
+                      className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.HorarioIds.includes(h.HorarioId)}
+                        onChange={() => toggleHorario(h.HorarioId)}
+                        className="rounded"
+                      />
+                      {DIAS[h.DiaDaSemana]} — {h.HorarioDeInicio} às {h.HorarioDeEncerramento}
+                    </label>
+                  ))}
+                </div>
+              )}
+              {form.HorarioIds.length === 0 && horariosDeTrabalho.length > 0 && (
+                <p className="text-xs text-amber-600 mt-1">
+                  Nenhum horário selecionado — serviço não aparecerá para agendamento.
+                </p>
               )}
             </div>
             <div className="flex gap-2">
               <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
                 Salvar
               </button>
-              <button type="button" onClick={() => setShowForm(false)} className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+              >
                 Cancelar
               </button>
             </div>

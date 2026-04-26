@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 interface Agendamento {
-  AgendamentoId: string;
+  AgendamentoId: number;
   DataDoAgendamento: string;
   HorarioDeInicio: string;
   HorarioDeEncerramento: string;

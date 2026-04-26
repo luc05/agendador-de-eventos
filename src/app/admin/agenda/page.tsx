@@ -13,7 +13,7 @@ const DIAS = [
 ];
 
 interface Horario {
-  HorarioId: string;
+  HorarioId: number;
   DiaDaSemana: number;
   HorarioDeInicio: string;
   HorarioDeEncerramento: string;

@@ -27,7 +27,7 @@ enum DuracaoServicoEnumBase {
 }
 
 model Usuario {
-  UsuarioId         String                @id @default(cuid())
+  UsuarioId         Int                   @id @default(autoincrement())
   Nome              String
   Telefone          String                @unique  // Obrigatorio - identifica o cliente
   Email             String?               @unique
@@ -46,27 +46,40 @@ model Servicos {
   Duracao           DuracaoServicoEnumBase @default(MIN_30)
   Custo             Float?                  // Em centavos: 5000 = R$50,00
   Ativo             Boolean               @default(true)
-  DiasDisponiveis   Int[]                 @default([])
   DataDeCriacao     DateTime              @default(now())
   DataDeModificacao DateTime              @updatedAt
   Agendamentos      Agendamentos[]
+  DiasDisponiveis   DiasDisponiveisDosServicos[]
 }
 
 model HorarioDeFuncionamento {
-  HorarioId         String    @id @default(cuid())
+  HorarioId         Int       @id @default(autoincrement())
   DiaDaSemana       Int       // 0=Domingo, 1=Segunda ... 6=Sabado
   HorarioDeInicio   String    // "08:00"
   HorarioDeEncerramento String // "18:00"
   Intervalo         Boolean   @default(false) // true = horario de almoco/pausa
   DataDeCriacao     DateTime  @default(now())
   DataDeModificacao DateTime  @updatedAt
+  DiasDisponiveis   DiasDisponiveisDosServicos[]
 
   @@index([DiaDaSemana])
 }
 
+model DiasDisponiveisDosServicos {
+  ServicoId  Int
+  HorarioId  Int
+
+  Servico    Servicos               @relation(fields: [ServicoId], references: [ServicoId], onDelete: Cascade)
+  Horario    HorarioDeFuncionamento @relation(fields: [HorarioId], references: [HorarioId], onDelete: Cascade)
+
+  @@id([ServicoId, HorarioId])
+  @@index([ServicoId])
+  @@index([HorarioId])
+}
+
 model Agendamentos {
-  AgendamentoId     String                    @id @default(cuid())
-  UsuarioQueAgendouId String
+  AgendamentoId     Int                    @id @default(autoincrement())
+  UsuarioQueAgendouId Int
   ServicoId         Int
   DataDoAgendamento DateTime                  @db.Date
   HorarioDeInicio   String                    // "10:00"

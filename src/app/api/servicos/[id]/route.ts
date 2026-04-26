@@ -13,11 +13,20 @@ export async function PUT(
   }
 
   const { id } = await ctx.params;
-  const body = await request.json();
+  const { HorarioIds, ...body } = await request.json();
 
   const servico = await prisma.servicos.update({
     where: { ServicoId: Number(id) },
-    data: body,
+    data: {
+      ...body,
+      DiasDisponiveis: {
+        deleteMany: {},
+        create: (HorarioIds || []).map((horarioId: number) => ({ HorarioId: horarioId })),
+      },
+    },
+    include: {
+      DiasDisponiveis: { include: { Horario: true } },
+    },
   });
 
   return NextResponse.json(servico);

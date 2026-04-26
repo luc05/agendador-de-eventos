@@ -17,7 +17,7 @@ export async function PUT(
   const body = await request.json();
 
   const agendamentoExistente = await prisma.agendamentos.findUnique({
-    where: { AgendamentoId: id },
+    where: { AgendamentoId: Number(id) },
     include: {
       Servicos: { select: { Nome: true } },
       Usuario: { select: { Nome: true, Telefone: true } },
@@ -35,7 +35,7 @@ export async function PUT(
     return NextResponse.json({ error: "Status inválido" }, { status: 400 });
   }
   const agendamento = await prisma.agendamentos.update({
-    where: { AgendamentoId: id },
+    where: { AgendamentoId: Number(id) },
     data: { Status: body.status },
   });
 

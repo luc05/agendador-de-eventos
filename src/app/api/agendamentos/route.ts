@@ -14,10 +14,10 @@ export async function GET(request: Request) {
   let where = {};
   if (isAdmin) {
     // Admin vê todos (ou filtra por usuário se passado)
-    if (usuarioId) where = { UsuarioQueAgendouId: usuarioId };
+    if (usuarioId) where = { UsuarioQueAgendouId: Number(usuarioId) };
   } else if (usuarioId) {
     // Cliente vê só os seus
-    where = { UsuarioQueAgendouId: usuarioId };
+    where = { UsuarioQueAgendouId: Number(usuarioId) };
   } else {
     return NextResponse.json([]);
   }
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
 
       return tx.agendamentos.create({
         data: {
-          UsuarioQueAgendouId: usuarioId,
+          UsuarioQueAgendouId: Number(usuarioId),
           ServicoId: Number(servicoId),
           DataDoAgendamento: dataDoAgendamento,
           HorarioDeInicio: horarioDeInicio,

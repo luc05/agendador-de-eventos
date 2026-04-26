@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 interface Agendamento {
-  AgendamentoId: string;
+  AgendamentoId: number;
   DataDoAgendamento: string;
   HorarioDeInicio: string;
   HorarioDeEncerramento: string;

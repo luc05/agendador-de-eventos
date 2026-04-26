@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 interface Usuario {
-  UsuarioId: string;
+  UsuarioId: number;
   Nome: string;
   Telefone: string;
   Email: string | null;

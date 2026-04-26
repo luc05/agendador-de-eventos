@@ -6,6 +6,11 @@ export async function GET() {
   const servicos = await prisma.servicos.findMany({
     where: { Ativo: true },
     orderBy: { Nome: "asc" },
+    include: {
+      DiasDisponiveis: {
+        include: { Horario: true },
+      },
+    },
   });
   return NextResponse.json(servicos);
 }
@@ -18,7 +23,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { Nome, Descricao, Duracao, Custo, DiasDisponiveis } = body;
+  const { Nome, Descricao, Duracao, Custo, HorarioIds } = body;
 
   if (!Nome || !Duracao) {
     return NextResponse.json(
@@ -28,7 +33,18 @@ export async function POST(request: Request) {
   }
 
   const servico = await prisma.servicos.create({
-    data: { Nome, Descricao, Duracao, Custo, DiasDisponiveis: DiasDisponiveis || [] },
+    data: {
+      Nome,
+      Descricao,
+      Duracao,
+      Custo,
+      DiasDisponiveis: {
+        create: (HorarioIds || []).map((horarioId: number) => ({ HorarioId: horarioId })),
+      },
+    },
+    include: {
+      DiasDisponiveis: { include: { Horario: true } },
+    },
   });
 
   return NextResponse.json(servico, { status: 201 });

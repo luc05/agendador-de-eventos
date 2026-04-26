@@ -8,7 +8,7 @@ interface Servico {
   Descricao: string | null;
   Duracao: string;
   Custo: number | null;
-  DiasDisponiveis: number[];
+  DiasDisponiveis: { HorarioId: number; Horario: { DiaDaSemana: number; Intervalo: boolean } }[];
 }
 
 interface Slot {
@@ -16,12 +16,8 @@ interface Slot {
   HorarioDeFinalizacao: string;
 }
 
-interface HorarioFuncionamento {
-  DiaDaSemana: number;
-}
-
 interface ClienteData {
-  ClienteDataId: string;
+  ClienteDataId: number;
   Nome: string;
   Telefone: string;
 }
@@ -56,7 +52,7 @@ export default function BookingPage() {
   const [success, setSuccess] = useState(false);
   const [loadingPhone, setLoadingPhone] = useState(false);
   const [meusAgendamentos, setMeusAgendamentos] = useState<{
-    AgendamentoId: string;
+    AgendamentoId: number;
     DataDoAgendamento: string;
     HorarioDeInicio: string;
     HorarioDeEncerramento: string;
@@ -64,23 +60,21 @@ export default function BookingPage() {
     Servicos: { Nome: string };
   }[]>([]);
 
-  async function carregarDatasDisponiveis(servico: Servico) {
+  function carregarDatasDisponiveis(servico: Servico) {
     setLoadingDatas(true);
     setDatasDisponiveis([]);
-    const res = await fetch("/api/agendar");
-    const horarios: HorarioFuncionamento[] = await res.json();
-    const diasComFuncionamento = new Set(horarios.map((h) => h.DiaDaSemana));
-    const diasDoServico = servico.DiasDisponiveis ?? [];
+    const diasDoServico = new Set(
+      servico.DiasDisponiveis
+        .filter((d) => !d.Horario.Intervalo)
+        .map((d) => d.Horario.DiaDaSemana)
+    );
     const datas: string[] = [];
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     for (let i = 0; i < 30; i++) {
       const data = new Date(hoje);
       data.setDate(hoje.getDate() + i);
-      const diaDaSemana = data.getDay();
-      const temFuncionamento = diasComFuncionamento.has(diaDaSemana);
-      const disponivelNoServico = diasDoServico.length === 0 || diasDoServico.includes(diaDaSemana);
-      if (temFuncionamento && disponivelNoServico) {
+      if (diasDoServico.has(data.getDay())) {
         datas.push(data.toISOString().split("T")[0]);
       }
     }

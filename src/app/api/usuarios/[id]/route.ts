@@ -21,7 +21,7 @@ export async function PUT(
   }
 
   const usuario = await prisma.usuario.update({
-    where: { UsuarioId: id },
+    where: { UsuarioId: Number(id) },
     data: body,
   });
 
@@ -41,7 +41,7 @@ export async function DELETE(
   const { id } = await ctx.params;
 
   await prisma.usuario.delete({
-    where: { UsuarioId: id },
+    where: { UsuarioId: Number(id) },
   });
 
   return NextResponse.json({ ok: true });

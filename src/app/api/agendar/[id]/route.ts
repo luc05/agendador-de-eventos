@@ -16,7 +16,7 @@ export async function PUT(
   const body = await request.json();
 
   const horario = await prisma.horarioDeFuncionamento.update({
-    where: { HorarioId: id },
+    where: { HorarioId: Number(id) },
     data: body,
   });
 
@@ -36,7 +36,7 @@ export async function DELETE(
   const { id } = await ctx.params;
 
   await prisma.horarioDeFuncionamento.delete({
-    where: { HorarioId: id },
+    where: { HorarioId: Number(id) },
   });
 
   return NextResponse.json({ ok: true });
