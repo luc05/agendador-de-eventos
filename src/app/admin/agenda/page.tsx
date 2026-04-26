@@ -31,8 +31,16 @@ export default function AdminTelaDeAgenda() {
   });
 
   async function ObterHorarios() {
-    const res = await fetch("/api/agendar");
-    setHorarios(await res.json());
+    try {
+      const res = await fetch("/api/agendar");
+      if (!res.ok) {
+        console.error("Failed to fetch horarios:", res.status);
+        return;
+      }
+      setHorarios(await res.json());
+    } catch (err) {
+      console.error("Error fetching horarios:", err);
+    }
   }
 
   useEffect(() => {
