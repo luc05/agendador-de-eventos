@@ -8,11 +8,16 @@ interface Servico {
   Descricao: string | null;
   Duracao: string;
   Custo: number | null;
+  DiasDisponiveis: number[];
 }
 
 interface Slot {
   HorarioDeInicio: string;
   HorarioDeFinalizacao: string;
+}
+
+interface HorarioFuncionamento {
+  DiaDaSemana: number;
 }
 
 interface ClienteData {
@@ -43,6 +48,8 @@ export default function BookingPage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
+  const [datasDisponiveis, setDatasDisponiveis] = useState<string[]>([]);
+  const [loadingDatas, setLoadingDatas] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [booking, setBooking] = useState(false);
   const [error, setError] = useState("");
@@ -56,6 +63,30 @@ export default function BookingPage() {
     Status: string;
     Servicos: { Nome: string };
   }[]>([]);
+
+  async function carregarDatasDisponiveis(servico: Servico) {
+    setLoadingDatas(true);
+    setDatasDisponiveis([]);
+    const res = await fetch("/api/agendar");
+    const horarios: HorarioFuncionamento[] = await res.json();
+    const diasComFuncionamento = new Set(horarios.map((h) => h.DiaDaSemana));
+    const diasDoServico = servico.DiasDisponiveis ?? [];
+    const datas: string[] = [];
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 30; i++) {
+      const data = new Date(hoje);
+      data.setDate(hoje.getDate() + i);
+      const diaDaSemana = data.getDay();
+      const temFuncionamento = diasComFuncionamento.has(diaDaSemana);
+      const disponivelNoServico = diasDoServico.length === 0 || diasDoServico.includes(diaDaSemana);
+      if (temFuncionamento && disponivelNoServico) {
+        datas.push(data.toISOString().split("T")[0]);
+      }
+    }
+    setDatasDisponiveis(datas);
+    setLoadingDatas(false);
+  }
 
   async function ObterAgendamentosPorUsuarioId(usuarioId: string) {
     const res = await fetch(`/api/agendamentos?usuarioId=${usuarioId}`);
@@ -149,8 +180,6 @@ export default function BookingPage() {
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [selectedSlot, success, booking]);
-
-  const today = new Date().toISOString().split("T")[0];
 
   if (success) {
     return (
@@ -363,6 +392,7 @@ export default function BookingPage() {
                       setSelectedDate("");
                       setSelectedSlot(null);
                       setStep(3);
+                      carregarDatasDisponiveis(s);
                     }}
                     className={`text-left p-4 rounded-lg border-2 transition-colors ${
                       selectedService?.ServicoId === s.ServicoId
@@ -392,16 +422,37 @@ export default function BookingPage() {
                 <h2 className="text-lg font-semibold text-gray-800 mb-3">
                   2. Escolha a data
                 </h2>
-                <input
-                  type="date"
-                  min={today}
-                  value={selectedDate}
-                  onChange={(e) => {
-                    setSelectedDate(e.target.value);
-                    setStep(4);
-                  }}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-gray-900"
-                />
+                {loadingDatas ? (
+                  <p className="text-gray-500 text-sm">Carregando datas disponíveis...</p>
+                ) : datasDisponiveis.length === 0 ? (
+                  <p className="text-gray-500 text-sm">Nenhuma data disponível no momento.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {datasDisponiveis.map((data) => {
+                      const dataObj = new Date(data + "T00:00:00");
+                      const diaSemana = dataObj.toLocaleDateString("pt-BR", { weekday: "short" });
+                      const diaFormatado = dataObj.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+                      return (
+                        <button
+                          key={data}
+                          onClick={() => {
+                            setSelectedDate(data);
+                            setSelectedSlot(null);
+                            setStep(4);
+                          }}
+                          className={`px-3 py-2 rounded-md text-sm font-medium transition-colors text-center min-w-[60px] ${
+                            selectedDate === data
+                              ? "bg-blue-600 text-white"
+                              : "bg-white border border-gray-300 text-gray-700 hover:border-blue-400"
+                          }`}
+                        >
+                          <div className="font-semibold">{diaFormatado}</div>
+                          <div className="text-xs capitalize">{diaSemana}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 

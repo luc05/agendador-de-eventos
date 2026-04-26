@@ -2,6 +2,16 @@
 
 import { useEffect, useState } from "react";
 
+const DIAS_SEMANA = [
+  { value: 0, label: "Domingo" },
+  { value: 1, label: "Segunda" },
+  { value: 2, label: "Terça" },
+  { value: 3, label: "Quarta" },
+  { value: 4, label: "Quinta" },
+  { value: 5, label: "Sexta" },
+  { value: 6, label: "Sábado" },
+];
+
 const DURACAO_OPTIONS = [
   { value: "MIN_30", label: "30 minutos" },
   { value: "MIN_60", label: "1 hora" },
@@ -22,6 +32,7 @@ interface Servico {
   Duracao: string;
   Custo: number | null;
   Ativo: boolean;
+  DiasDisponiveis: number[];
 }
 
 export default function AdminServicesPage() {
@@ -33,6 +44,7 @@ export default function AdminServicesPage() {
     Descricao: "",
     Duracao: "MIN_30",
     Custo: 0,
+    DiasDisponiveis: [] as number[],
   });
 
   async function ObterSevicos() {
@@ -46,7 +58,7 @@ export default function AdminServicesPage() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ Nome: "", Descricao: "", Duracao: "MIN_30", Custo: 0 });
+    setForm({ Nome: "", Descricao: "", Duracao: "MIN_30", Custo: 0, DiasDisponiveis: [] });
     setShowForm(true);
   }
 
@@ -57,8 +69,15 @@ export default function AdminServicesPage() {
       Descricao: s.Descricao || "",
       Duracao: s.Duracao,
       Custo: s.Custo || 0,
+      DiasDisponiveis: s.DiasDisponiveis || [],
     });
     setShowForm(true);
+  }
+
+  function toggleDia(dia: number) {
+    const atual = form.DiasDisponiveis;
+    const novo = atual.includes(dia) ? atual.filter((d) => d !== dia) : [...atual, dia];
+    setForm({ ...form, DiasDisponiveis: novo });
   }
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
@@ -148,6 +167,25 @@ export default function AdminServicesPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-900"
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Dias disponíveis</label>
+              <div className="flex flex-wrap gap-3">
+                {DIAS_SEMANA.map((dia) => (
+                  <label key={dia.value} className="flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={form.DiasDisponiveis.includes(dia.value)}
+                      onChange={() => toggleDia(dia.value)}
+                      className="rounded"
+                    />
+                    {dia.label}
+                  </label>
+                ))}
+              </div>
+              {form.DiasDisponiveis.length === 0 && (
+                <p className="text-xs text-amber-600 mt-1">Nenhum dia selecionado — serviço aparecerá em todos os dias de funcionamento.</p>
+              )}
             </div>
             <div className="flex gap-2">
               <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">

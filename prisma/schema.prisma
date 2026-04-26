@@ -46,6 +46,7 @@ model Servicos {
   Duracao           DuracaoServicoEnumBase @default(MIN_30)
   Custo             Float?                  // Em centavos: 5000 = R$50,00
   Ativo             Boolean               @default(true)
+  DiasDisponiveis   Int[]                 @default([])
   DataDeCriacao     DateTime              @default(now())
   DataDeModificacao DateTime              @updatedAt
   Agendamentos      Agendamentos[]

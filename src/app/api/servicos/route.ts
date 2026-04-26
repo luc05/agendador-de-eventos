@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { Nome, Descricao, Duracao, Custo } = body;
+  const { Nome, Descricao, Duracao, Custo, DiasDisponiveis } = body;
 
   if (!Nome || !Duracao) {
     return NextResponse.json(
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   }
 
   const servico = await prisma.servicos.create({
-    data: { Nome, Descricao, Duracao, Custo },
+    data: { Nome, Descricao, Duracao, Custo, DiasDisponiveis: DiasDisponiveis || [] },
   });
 
   return NextResponse.json(servico, { status: 201 });
