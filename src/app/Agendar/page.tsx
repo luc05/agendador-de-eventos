@@ -82,7 +82,7 @@ export default function BookingPage() {
     setLoadingDatas(false);
   }
 
-  async function ObterAgendamentosPorUsuarioId(usuarioId: string) {
+  async function ObterAgendamentosPorUsuarioId(usuarioId: number) {
     const res = await fetch(`/api/agendamentos?usuarioId=${usuarioId}`);
     const data = await res.json();
     setMeusAgendamentos(data);
